@@ -3,9 +3,10 @@
 namespace Huozi\Yar\Rpc\Client;
 
 use Huozi\Yar\Rpc\Client\Commands\MakeYarClientFacade;
+use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
-class ServiceProvider extends LaravelServiceProvider
+class ServiceProvider extends LaravelServiceProvider implements DeferrableProvider
 {
 
     /**
@@ -60,4 +61,15 @@ class ServiceProvider extends LaravelServiceProvider
         return $this->app['config']->get("yar_client.{$key}", $default);
     }
 
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return array
+     */
+    public function provides()
+    {
+        return \array_map(function ($name) {
+            return 'rpc.client.' . $name;
+        }, \array_keys($this->config('clients', [])));
+    }
 }
