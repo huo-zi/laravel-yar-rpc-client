@@ -18,7 +18,7 @@
     },
     "autoload" : {
         "psr-4" : {
-            "Huozi\\Yar\\Rpc\\Client" : "src"
+            "Huozi\\Yar\\Rpc\\Client\\" : "src"
         }
     },
     "extra" : {
