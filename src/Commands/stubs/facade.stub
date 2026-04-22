@@ -5,7 +5,7 @@ namespace DummyNamespace;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static DummyMethod
+ * @method static mixed DummyMethod
  */
 class DummyNameRpcClient extends Facade
 {

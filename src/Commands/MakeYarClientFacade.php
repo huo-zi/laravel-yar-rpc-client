@@ -3,7 +3,7 @@
 namespace Huozi\Yar\Rpc\Client\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 
 class MakeYarClientFacade extends Command
@@ -31,15 +31,17 @@ class MakeYarClientFacade extends Command
     public function __construct(Filesystem $filesystem)
     {
         $this->filesystem = $filesystem;
+
+        parent::__construct();
     }
 
     public function handle()
     {
         foreach (config('yar_client.clients', []) as $alias => $config) {
             $methods = [];
-            preg_match_all('/\w+\:\:\w+\([^\)]*\)/', @file_get_contents($config['url']), $methods);
+            preg_match_all('/\w+\:\:(\w+\([^\)]*\))/', @file_get_contents($config['url']), $methods);
 
-            $this->createFacade($alias, implode("\n * @method static ", $methods));
+            $this->createFacade($alias, implode("\n * @method static mixed ", $methods[1]));
         }
 
         $this->info('Rpc client Facades Created Successfully!');
@@ -53,8 +55,8 @@ class MakeYarClientFacade extends Command
      */
     protected function createFacade($alias, $methods)
     {
-        $path = lcfirst(str_replace('\\', '/', config('yar_client.namespace', 'App\\Rpc\\Clients\\')));
-        $path = $this->laravel->basePath($path);
+        $path = \str_replace([$this->laravel->getNamespace(), '\\'], ['', \DIRECTORY_SEPARATOR], config('yar_client.namespace', 'App\\Rpc\\Clients\\'));
+        $path = $this->laravel->path . \DIRECTORY_SEPARATOR . $path . Str::studly($alias) . 'RpcClient.php';
 
         $content = $this->formatFacadeStub(
             $alias, $methods, file_get_contents(__DIR__.'/stubs/facade.stub')
@@ -74,7 +76,7 @@ class MakeYarClientFacade extends Command
     protected function formatFacadeStub($alias, $methods, $stub)
     {
         $replacements = [
-            config('yar_client.namespace', 'App\\Rpc\\Clients\\') . Str::studly($alias),
+            \rtrim(config('yar_client.namespace', 'App\\Rpc\\Clients\\'), '\\'),
             Str::studly($alias),
             'rpc.client.' . $alias,
             $methods,

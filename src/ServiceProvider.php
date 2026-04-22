@@ -2,6 +2,7 @@
 
 namespace Huozi\Yar\Rpc\Client;
 
+use Huozi\Yar\Rpc\Client\Commands\MakeYarClientFacade;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
 class ServiceProvider extends LaravelServiceProvider
@@ -27,6 +28,8 @@ class ServiceProvider extends LaravelServiceProvider
     public function register()
     {
         $this->registerClients();
+
+        $this->commands(MakeYarClientFacade::class);
     }
 
     protected function registerClients()
@@ -34,7 +37,7 @@ class ServiceProvider extends LaravelServiceProvider
         foreach ($this->config('clients', []) as $name => $config) {
             $this->app->singleton('rpc.client.' . $name, function () use ($name, $config) {
                 $client = new \Yar_client($config['url']);
-                $options = array_merge($this->config("clients.options", []), $this->config("clients.{$name}.options", []));
+                $options =  $this->config("clients.{$name}.options", []) + $this->config("options", []);
                 foreach ($options as $key => $value) {
                     $client->setOpt($key, $value);
                 }
