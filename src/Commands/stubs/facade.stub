@@ -1,0 +1,21 @@
+<?php
+
+namespace DummyNamespace;
+
+use Illuminate\Support\Facades\Facade;
+
+/**
+ * @method static DummyMethod
+ */
+class DummyNameRpcClient extends Facade
+{
+    /**
+     * Get the registered name of the component.
+     *
+     * @return string
+     */
+    protected static function getFacadeAccessor()
+    {
+        return 'DummyTarget';
+    }
+}
