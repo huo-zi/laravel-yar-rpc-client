@@ -25,10 +25,17 @@ class MakeYarClientFacade extends Command
 
 
     /**
+     * The filesystem instance.
+     *
      * @var Filesystem
      */
     private $filesystem;
 
+    /**
+     * Create a new MakeYarClientFacade instance.
+     *
+     * @param  Filesystem  $filesystem
+     */
     public function __construct(Filesystem $filesystem)
     {
         $this->filesystem = $filesystem;
@@ -36,6 +43,11 @@ class MakeYarClientFacade extends Command
         parent::__construct();
     }
 
+    /**
+     * Execute the console command.
+     *
+     * @return void
+     */
     public function handle()
     {
         foreach (config('yar_client.clients', []) as $alias => $config) {
@@ -50,6 +62,11 @@ class MakeYarClientFacade extends Command
         $this->info('Rpc client Facades Created Successfully!');
     }
 
+    /**
+     * Create concurrent client facade.
+     *
+     * @return void
+     */
     protected function createConcurrentFacade()
     {
         $path = $this->getFacadePath() . 'ConcurrentRpcClient.php';
@@ -78,6 +95,7 @@ class MakeYarClientFacade extends Command
      * Ensure that the given alias has an existing real-time facade class.
      *
      * @param  string  $alias
+     * @param  string  $methods
      * @return string
      */
     protected function createFacade($alias, $methods)
@@ -96,6 +114,7 @@ class MakeYarClientFacade extends Command
      * Format the facade stub with the proper namespace and class.
      *
      * @param  string  $alias
+     * @param  string  $methods
      * @param  string  $stub
      * @return string
      */
@@ -113,12 +132,22 @@ class MakeYarClientFacade extends Command
         );
     }
 
+    /**
+     * Get the facade path.
+     *
+     * @return string
+     */
     protected function getFacadePath()
     {
         $path = \str_replace([$this->laravel->getNamespace(), '\\'], ['', \DIRECTORY_SEPARATOR], config('yar_client.namespace', 'App\\Rpc\\Clients\\'));
         return $this->laravel->path . \DIRECTORY_SEPARATOR . $path;
     }
 
+    /**
+     * Get the stubs.
+     *
+     * @return string
+     */
     protected function getStubs()
     {
         return file_get_contents(__DIR__.'/stubs/facade.stub');

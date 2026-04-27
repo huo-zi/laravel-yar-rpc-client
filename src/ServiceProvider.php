@@ -35,6 +35,11 @@ class ServiceProvider extends LaravelServiceProvider implements DeferrableProvid
         $this->commands(MakeYarClientFacade::class);
     }
 
+    /**
+     * Register client services.
+     *
+     * @return void
+     */
     protected function registerClients()
     {
         foreach ($this->config('clients', []) as $name => $config) {
@@ -50,6 +55,11 @@ class ServiceProvider extends LaravelServiceProvider implements DeferrableProvid
         }
     }
 
+    /**
+     * Register concurrent service.
+     *
+     * @return void
+     */
     protected function registerConcurrentService()
     {
         $this->app->bind(ConcurrentService::class, function () {

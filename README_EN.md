@@ -102,6 +102,79 @@ $users = UserRpcClient::listUsers(['page' => 1, 'limit' => 10]);
 $order = OrderRpcClient::getOrder(123);
 ```
 
+### 3. Concurrent Calls
+
+The library supports concurrent calls to multiple RPC services to improve request efficiency:
+
+#### 3.1 Magic Method Call (Recommended)
+
+Using magic method call for cleaner code:
+
+```php
+use App\Rpc\Clients\ConcurrentRpcClient;
+
+// Concurrent calls to multiple services (magic method way)
+$result = ConcurrentRpcClient::user('getUser', [1])
+    ->order('getOrder', [123])
+    ->execute();
+
+// Get results
+$user = $result->get('user.getUser');
+$order = $result->get('order.getOrder');
+```
+
+#### 3.2 Using call() Method
+
+Using `call()` method for more flexibility:
+
+```php
+use App\Rpc\Clients\ConcurrentRpcClient;
+
+// Concurrent calls to multiple services (call() method way)
+$result = ConcurrentRpcClient::call('user', 'getUser', [1])
+    ->call('order', 'getOrder', [123])
+    ->execute();
+
+// Get results
+$user = $result->get('user.getUser');
+$order = $result->get('order.getOrder');
+```
+
+#### 3.3 Result Format
+
+```php
+// Success example
+[
+    'user.getUser' => [
+        'code' => 0, // 0 means success
+        'data' => $userData // Data returned by the remote method
+    ],
+    'order.getOrder' => [
+        'code' => 0,
+        'data' => $orderData
+    ]
+]
+
+// Failure example (one service call failed)
+[
+    'user.getUser' => [
+        'code' => 0, // Success
+        'data' => $userData
+    ],
+    'order.getOrder' => [
+        'code' => 1, // Failure, yar error code
+        'message' => 'Connect timeout' // Error message
+    ]
+]
+```
+
+**Concurrent Call Features:**
+- All requests are sent simultaneously, reducing waiting time
+- Automatically handles errors, even if one service fails, it won't affect other services
+- Results are organized in `client.method` format for easy access
+- Supports method chaining for cleaner code
+- Supports two calling methods: magic method and call() method
+
 ## Configuration Options
 
 | Option | Default | Description |

@@ -7,12 +7,50 @@ use Illuminate\Support\Collection;
 class ConcurentCall
 {
 
+    /**
+     * The client name.
+     *
+     * @var string
+     */
     private $name;
+
+    /**
+     * The client configuration.
+     *
+     * @var array
+     */
     private $config;
+
+    /**
+     * The method name.
+     *
+     * @var string
+     */
     private $method;
+
+    /**
+     * The parameters.
+     *
+     * @var array
+     */
     private $params;
+
+    /**
+     * The options.
+     *
+     * @var array
+     */
     private $options;
 
+    /**
+     * Create a new ConcurentCall instance.
+     *
+     * @param  string  $name
+     * @param  array  $config
+     * @param  string  $method
+     * @param  array  $params
+     * @param  array  $options
+     */
     public function __construct($name, $config, $method, $params = [], $options = [])
     {
         $this->name = $name;
@@ -23,9 +61,11 @@ class ConcurentCall
     }
 
     /**
-     * 
-     * @param Collection $collect
-     * @param callable $stack
+     * Handle the concurrent call.
+     *
+     * @param  Collection  $collect
+     * @param  callable  $stack
+     * @return mixed
      */
     public function handle($collect, $stack)
     {

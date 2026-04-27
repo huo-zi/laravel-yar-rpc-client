@@ -97,6 +97,79 @@ $users = UserRpcClient::listUsers(['page' => 1, 'limit' => 10]);
 $order = OrderRpcClient::getOrder(123);
 ```
 
+### 3. 并发调用
+
+支持并发调用多个 RPC 服务，提高请求效率：
+
+#### 3.1 魔术方法调用（推荐）
+
+使用魔术方法调用：
+
+```php
+use App\Rpc\Clients\ConcurrentRpcClient;
+
+// 并发调用多个服务（魔术方法方式）
+$result = ConcurrentRpcClient::user('getUser', [1])
+    ->order('getOrder', [123])
+    ->execute();
+
+// 获取结果
+$user = $result->get('user.getUser');
+$order = $result->get('order.getOrder');
+```
+
+#### 3.2 使用 call() 方法调用
+
+使用 `call()` 方法调用：
+
+```php
+use App\Rpc\Clients\ConcurrentRpcClient;
+
+// 并发调用多个服务（call() 方法方式）
+$result = ConcurrentRpcClient::call('user', 'getUser', [1])
+    ->call('order', 'getOrder', [123])
+    ->execute();
+
+// 获取结果
+$user = $result->get('user.getUser');
+$order = $result->get('order.getOrder');
+```
+
+#### 3.3 结果格式
+
+```php
+// 成功示例
+[
+    'user.getUser' => [
+        'code' => 0, // 0 表示成功
+        'data' => $userData // 远程方法返回的数据
+    ],
+    'order.getOrder' => [
+        'code' => 0,
+        'data' => $orderData
+    ]
+]
+
+// 失败示例（某个服务调用失败）
+[
+    'user.getUser' => [
+        'code' => 0, // 成功
+        'data' => $userData
+    ],
+    'order.getOrder' => [
+        'code' => 1, // 失败，yar错误码
+        'message' => 'Connect timeout' // 错误信息
+    ]
+]
+```
+
+**并发调用特点：**
+- 所有请求同时发送，减少等待时间
+- 自动处理错误，即使某个服务失败也不会影响其他服务
+- 返回结果按 `client.method` 格式组织，方便获取
+- 支持链式调用，代码更加简洁
+- 支持两种调用方式：魔术方法和 call() 方法
+
 ## 配置选项说明
 
 | 配置项 | 默认值 | 说明 |
