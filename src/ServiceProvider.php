@@ -3,6 +3,7 @@
 namespace Huozi\Yar\Rpc\Client;
 
 use Huozi\Yar\Rpc\Client\Commands\MakeYarClientFacade;
+use Huozi\Yar\Rpc\Client\Concurent\ConcurrentService;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
@@ -29,6 +30,7 @@ class ServiceProvider extends LaravelServiceProvider implements DeferrableProvid
     public function register()
     {
         $this->registerClients();
+        $this->registerConcurrentService();
 
         $this->commands(MakeYarClientFacade::class);
     }
@@ -38,7 +40,7 @@ class ServiceProvider extends LaravelServiceProvider implements DeferrableProvid
         foreach ($this->config('clients', []) as $name => $config) {
             $this->app->singleton('rpc.client.' . $name, function () use ($name, $config) {
                 $client = new \Yar_client($config['url']);
-                $options =  $this->config("clients.{$name}.options", []) + $this->config("options", []);
+                $options = $this->config("clients.{$name}.options", []) + $this->config("options", []);
                 foreach ($options as $key => $value) {
                     $client->setOpt($key, $value);
                 }
@@ -46,6 +48,13 @@ class ServiceProvider extends LaravelServiceProvider implements DeferrableProvid
                 return $client;
             });
         }
+    }
+
+    protected function registerConcurrentService()
+    {
+        $this->app->bind(ConcurrentService::class, function () {
+            return new ConcurrentService($this->app['config']->get('yar_client'));
+        });
     }
 
     /**
@@ -68,8 +77,12 @@ class ServiceProvider extends LaravelServiceProvider implements DeferrableProvid
      */
     public function provides()
     {
-        return \array_map(function ($name) {
+        $clients = \array_map(function ($name) {
             return 'rpc.client.' . $name;
         }, \array_keys($this->config('clients', [])));
+
+        return \array_merge($clients, [
+            ConcurrentService::class,
+        ]);
     }
 }

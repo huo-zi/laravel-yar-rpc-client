@@ -2,6 +2,7 @@
 
 namespace Huozi\Yar\Rpc\Client\Commands;
 
+use Huozi\Yar\Rpc\Client\Concurent\ConcurrentService;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
@@ -44,7 +45,33 @@ class MakeYarClientFacade extends Command
             $this->createFacade($alias, implode("\n * @method static mixed ", $methods[1]));
         }
 
+        $this->createConcurrentFacade();
+
         $this->info('Rpc client Facades Created Successfully!');
+    }
+
+    protected function createConcurrentFacade()
+    {
+        $path = $this->getFacadePath() . 'ConcurrentRpcClient.php';
+        $class = ConcurrentService::class;
+
+        $clients = array_map(function($client) {
+            return $client . '(string $method, array $params = [], array $options = [])';
+        }, array_keys(config('yar_client.clients', [])));
+        $content = str_replace(
+            [
+                'DummyNamespace', 
+                'DummyName', 
+                'DummyTarget', 
+                'DummyMethod'
+            ], [
+                \rtrim(config('yar_client.namespace', 'App\\Rpc\\Clients\\'), '\\'),
+                'Concurrent',
+                $class,
+                implode("\n * @method static static|\\{$class} ", array_merge(['execute()', 'call(string $clientName, string $method, array $params = [], array $options = [])'], $clients)),
+            ], $this->getStubs()
+        );
+        $this->filesystem->put($path, $content);
     }
 
     /**
@@ -55,11 +82,10 @@ class MakeYarClientFacade extends Command
      */
     protected function createFacade($alias, $methods)
     {
-        $path = \str_replace([$this->laravel->getNamespace(), '\\'], ['', \DIRECTORY_SEPARATOR], config('yar_client.namespace', 'App\\Rpc\\Clients\\'));
-        $path = $this->laravel->path . \DIRECTORY_SEPARATOR . $path . Str::studly($alias) . 'RpcClient.php';
+        $path = $this->getFacadePath() . Str::studly($alias) . 'RpcClient.php';
 
         $content = $this->formatFacadeStub(
-            $alias, $methods, file_get_contents(__DIR__.'/stubs/facade.stub')
+            $alias, $methods, $this->getStubs()
         );
         $this->filesystem->put($path, $content);
 
@@ -85,5 +111,16 @@ class MakeYarClientFacade extends Command
         return str_replace(
             ['DummyNamespace', 'DummyName', 'DummyTarget', 'DummyMethod'], $replacements, $stub
         );
+    }
+
+    protected function getFacadePath()
+    {
+        $path = \str_replace([$this->laravel->getNamespace(), '\\'], ['', \DIRECTORY_SEPARATOR], config('yar_client.namespace', 'App\\Rpc\\Clients\\'));
+        return $this->laravel->path . \DIRECTORY_SEPARATOR . $path;
+    }
+
+    protected function getStubs()
+    {
+        return file_get_contents(__DIR__.'/stubs/facade.stub');
     }
 }
