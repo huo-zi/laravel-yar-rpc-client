@@ -50,6 +50,10 @@ class MakeYarClientFacade extends Command
      */
     public function handle()
     {
+        $this->cleanOldFacades();
+
+        $this->createConcurrentFacade();
+
         foreach (config('yar_client.clients', []) as $alias => $config) {
             $methods = [];
             preg_match_all('/\w+\:\:(\w+\([^\)]*\))/', @file_get_contents($config['url']), $methods);
@@ -57,9 +61,18 @@ class MakeYarClientFacade extends Command
             $this->createFacade($alias, implode("\n * @method static mixed ", $methods[1]));
         }
 
-        $this->createConcurrentFacade();
-
         $this->info('Rpc client Facades Created Successfully!');
+    }
+
+    /**
+     * Clean up the old facade files
+     *
+     * @return void
+     */
+    protected function cleanOldFacades()
+    {
+        $facades = $this->filesystem->allFiles($this->getFacadePath());
+        $this->filesystem->delete($facades);
     }
 
     /**
